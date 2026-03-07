@@ -45,7 +45,7 @@ const callAiProvider = async (
 
   const model =
     provider === 'openrouter'
-      ? 'openai/gpt-4o-mini'
+      ? 'deepseek/deepseek-chat'
       : provider === 'deepseek'
       ? 'deepseek-chat'
       : 'gpt-4o-mini'
