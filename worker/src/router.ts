@@ -2,9 +2,10 @@ import { initTRPC } from '@trpc/server'
 import { z } from 'zod'
 import type { LookupWordResult } from '../../shared/word'
 
-type AiProvider = 'deepseek' | 'openai'
+type AiProvider = 'openrouter' | 'deepseek' | 'openai'
 
 export interface WorkerEnv {
+  OPENROUTER_API_KEY?: string
   DEEPSEEK_API_KEY?: string
   OPENAI_API_KEY?: string
 }
@@ -21,7 +22,7 @@ const buildMockResult = (query: string): LookupWordResult => ({
   phonetic: '/ˈwɜːd/',
   translation: `“${query}” 的示例释义（未配置 AI Key，当前为演示数据）`,
   definition: `${query} is returned by the Cloudflare Worker mock dictionary response.`,
-  etymology: `Generated locally for ${query}. Configure DEEPSEEK_API_KEY or OPENAI_API_KEY to use a real model.`,
+  etymology: `Generated locally for ${query}. Configure OPENROUTER_API_KEY, DEEPSEEK_API_KEY, or OPENAI_API_KEY to use a real model.`,
   examples: [
     `I searched for the word "${query}" from the Pages frontend.`,
     `This response is served by a Cloudflare Worker through tRPC.`,
@@ -36,17 +37,30 @@ const callAiProvider = async (
   query: string,
 ): Promise<LookupWordResult | null> => {
   const endpoint =
-    provider === 'deepseek'
+    provider === 'openrouter'
+      ? 'https://openrouter.ai/api/v1/chat/completions'
+      : provider === 'deepseek'
       ? 'https://api.deepseek.com/chat/completions'
       : 'https://api.openai.com/v1/chat/completions'
 
-  const model = provider === 'deepseek' ? 'deepseek-chat' : 'gpt-4o-mini'
+  const model =
+    provider === 'openrouter'
+      ? 'openai/gpt-4o-mini'
+      : provider === 'deepseek'
+      ? 'deepseek-chat'
+      : 'gpt-4o-mini'
 
   const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${apiKey}`,
+      ...(provider === 'openrouter'
+        ? {
+            'HTTP-Referer': 'https://pages.liangsheng.life',
+            'X-Title': 'word-lookup-app',
+          }
+        : {}),
     },
     body: JSON.stringify({
       model,
@@ -94,6 +108,13 @@ const callAiProvider = async (
 
 const lookupWord = async (env: WorkerEnv, query: string): Promise<LookupWordResult> => {
   try {
+    if (env.OPENROUTER_API_KEY) {
+      const result = await callAiProvider('openrouter', env.OPENROUTER_API_KEY, query)
+      if (result) {
+        return result
+      }
+    }
+
     if (env.DEEPSEEK_API_KEY) {
       const result = await callAiProvider('deepseek', env.DEEPSEEK_API_KEY, query)
       if (result) {

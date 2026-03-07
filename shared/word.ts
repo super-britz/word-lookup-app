@@ -10,5 +10,5 @@ export interface LookupWordResult {
   definition: string
   etymology?: string
   examples: string[]
-  source: 'mock' | 'deepseek' | 'openai'
+  source: 'mock' | 'openrouter' | 'deepseek' | 'openai'
 }
