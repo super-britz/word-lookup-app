@@ -7,6 +7,71 @@ import { trpc } from '../lib/trpc'
 import { toWord } from '../lib/word'
 import type { Word } from '../store/useAppStore'
 
+function SearchResultSkeleton({ query }: { query: string }) {
+  return (
+    <>
+      <div className="bg-white rounded-3xl p-6 shadow-card border border-primary/10">
+        <div className="flex items-start justify-between mb-4">
+          <div className="space-y-3 flex-1">
+            <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-primary text-xs font-medium">
+              <span className="size-2 rounded-full bg-primary animate-pulse" />
+              正在查询中
+            </div>
+            <div>
+              <p className="text-slate-500 text-sm mb-1">Cloudflare Worker 正在处理：</p>
+              <p className="text-slate-900 font-semibold text-2xl">{query}</p>
+            </div>
+          </div>
+          <div className="h-10 w-24 rounded-full bg-slate-100 animate-pulse" />
+        </div>
+
+        <div className="space-y-5">
+          <div>
+            <div className="h-4 w-12 rounded bg-slate-100 animate-pulse mb-2" />
+            <div className="h-6 w-32 rounded bg-slate-200 animate-pulse" />
+          </div>
+
+          <div>
+            <div className="h-4 w-12 rounded bg-slate-100 animate-pulse mb-2" />
+            <div className="space-y-2">
+              <div className="h-4 w-full rounded bg-slate-100 animate-pulse" />
+              <div className="h-4 w-5/6 rounded bg-slate-100 animate-pulse" />
+            </div>
+          </div>
+
+          <div>
+            <div className="h-4 w-12 rounded bg-slate-100 animate-pulse mb-2" />
+            <div className="space-y-2">
+              <div className="h-4 w-full rounded bg-slate-100 animate-pulse" />
+              <div className="h-4 w-4/5 rounded bg-slate-100 animate-pulse" />
+            </div>
+          </div>
+
+          <div>
+            <div className="h-4 w-12 rounded bg-slate-100 animate-pulse mb-3" />
+            <div className="space-y-3">
+              <div className="h-4 w-full rounded bg-slate-100 animate-pulse" />
+              <div className="h-4 w-11/12 rounded bg-slate-100 animate-pulse" />
+              <div className="h-4 w-10/12 rounded bg-slate-100 animate-pulse" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-white border border-slate-200 rounded-2xl p-4">
+          <div className="h-8 w-8 rounded bg-slate-100 animate-pulse mb-2" />
+          <div className="h-4 w-16 rounded bg-slate-100 animate-pulse" />
+        </div>
+        <div className="bg-white border border-slate-200 rounded-2xl p-4">
+          <div className="h-8 w-8 rounded bg-slate-100 animate-pulse mb-2" />
+          <div className="h-4 w-12 rounded bg-slate-100 animate-pulse" />
+        </div>
+      </div>
+    </>
+  )
+}
+
 export default function SearchResultPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -94,10 +159,7 @@ export default function SearchResultPage() {
         <div className="flex-1 overflow-auto pb-32 w-full">
           <div className="p-6 space-y-6">
             {isLoading && (
-              <div className="bg-white rounded-3xl p-6 shadow-card">
-                <p className="text-slate-500 text-sm mb-2">正在通过 Cloudflare Worker 查询：</p>
-                <p className="text-slate-900 font-semibold text-xl">{query}</p>
-              </div>
+              <SearchResultSkeleton query={query} />
             )}
 
             {!isLoading && errorMessage && (
