@@ -85,7 +85,7 @@ const callAiProvider = async (
         {
           role: 'system',
           content:
-            'You are a dictionary assistant. Return strict JSON with keys: word, phonetic, translation, definition, etymology, examples. examples must be an array of 3 short strings.',
+            'You are a dictionary assistant. Return strict JSON with keys: word, phonetic, translation, definition, etymology, examples. translation, definition, and etymology must be written in Simplified Chinese. Keep word in English and phonetic as IPA. examples must be an array of 3 short English example sentences.',
         },
         {
           role: 'user',
