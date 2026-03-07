@@ -16,12 +16,21 @@ export default {
     }
 
     if (url.pathname === '/' || url.pathname === '/health') {
-      return new Response(JSON.stringify({ ok: true, service: 'word-lookup-api' }), {
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          service: 'word-lookup-api',
+          hasOpenRouterKey: Boolean(env.OPENROUTER_API_KEY),
+          hasDeepSeekKey: Boolean(env.DEEPSEEK_API_KEY),
+          hasOpenAIKey: Boolean(env.OPENAI_API_KEY),
+        }),
+        {
         headers: {
           'content-type': 'application/json',
           ...corsHeaders,
         },
-      })
+      },
+      )
     }
 
     if (url.pathname.startsWith('/trpc')) {
