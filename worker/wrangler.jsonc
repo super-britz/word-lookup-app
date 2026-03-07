@@ -1,0 +1,11 @@
+{
+  "name": "word-lookup-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-03-07",
+  "routes": [
+    {
+      "pattern": "api.liangsheng.life",
+      "custom_domain": true
+    }
+  ]
+}
