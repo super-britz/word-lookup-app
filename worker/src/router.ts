@@ -31,6 +31,21 @@ const buildMockResult = (query: string): LookupWordResult => ({
   source: 'mock',
 })
 
+const buildErrorResult = (query: string, message: string): LookupWordResult => ({
+  id: `${query.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
+  word: query,
+  phonetic: '/ˈwɜːd/',
+  translation: `“${query}” 当前仍在返回演示数据`,
+  definition: `AI provider failed and the Worker fell back to mock data.`,
+  etymology: message,
+  examples: [
+    `Query: ${query}`,
+    'The frontend request reached the Worker successfully.',
+    'Check the error details in this response and Cloudflare logs.',
+  ],
+  source: 'mock',
+})
+
 const callAiProvider = async (
   provider: AiProvider,
   apiKey: string,
@@ -81,7 +96,10 @@ const callAiProvider = async (
   })
 
   if (!response.ok) {
-    throw new Error(`${provider} request failed with ${response.status}`)
+    const errorText = await response.text()
+    throw new Error(
+      `${provider} request failed with ${response.status}: ${errorText.slice(0, 300)}`,
+    )
   }
 
   const data = (await response.json()) as {
@@ -130,6 +148,10 @@ const lookupWord = async (env: WorkerEnv, query: string): Promise<LookupWordResu
     }
   } catch (error) {
     console.error('AI lookup failed', error)
+    return buildErrorResult(
+      query,
+      error instanceof Error ? error.message : 'Unknown AI provider error',
+    )
   }
 
   return buildMockResult(query)
