@@ -3,7 +3,7 @@
 # 词典应用 - AWS EC2 自动部署脚本
 # 使用方法: ./deploy.sh
 
-set -e  # 遇到错误立即退出
+set -euo pipefail
 
 # 颜色输出
 RED='\033[0;31m'
@@ -14,8 +14,18 @@ NC='\033[0m' # No Color
 
 # 配置变量（请修改为你的实际值）
 EC2_IP="${EC2_IP:-your-ec2-ip}"
-KEY_PATH="${KEY_PATH:-~/Downloads/word-app-key.pem}"
+KEY_PATH="${KEY_PATH:-$HOME/Downloads/word-app-key.pem}"
 APP_NAME="word-lookup-app"
+REMOTE_USER="${REMOTE_USER:-ubuntu}"
+REMOTE_WEB_ROOT="${REMOTE_WEB_ROOT:-/var/www/html}"
+ARCHIVE_NAME="${APP_NAME}-dist.tar.gz"
+TMP_ARCHIVE="$(mktemp -t "${APP_NAME}.XXXXXX.tar.gz")"
+
+cleanup() {
+    rm -f "$TMP_ARCHIVE"
+}
+
+trap cleanup EXIT
 
 # 检查配置
 if [ "$EC2_IP" = "your-ec2-ip" ]; then
@@ -36,66 +46,49 @@ echo ""
 
 # 步骤1: 构建项目
 echo -e "${YELLOW}📦 步骤 1/4: 构建项目...${NC}"
-npm run build
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}✅ 构建成功${NC}"
-else
-    echo -e "${RED}❌ 构建失败${NC}"
-    exit 1
-fi
+pnpm build
+echo -e "${GREEN}✅ 构建成功${NC}"
 echo ""
 
 # 步骤2: 压缩文件
 echo -e "${YELLOW}🗜️  步骤 2/4: 压缩文件...${NC}"
-tar -czf dist.tar.gz dist/
+tar -czf "$TMP_ARCHIVE" dist/
 echo -e "${GREEN}✅ 压缩完成${NC}"
 echo ""
 
 # 步骤3: 上传到EC2
 echo -e "${YELLOW}📤 步骤 3/4: 上传到 EC2 ($EC2_IP)...${NC}"
-scp -i "$KEY_PATH" -o StrictHostKeyChecking=no dist.tar.gz ubuntu@$EC2_IP:~/
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}✅ 上传成功${NC}"
-else
-    echo -e "${RED}❌ 上传失败${NC}"
-    exit 1
-fi
+scp -i "$KEY_PATH" -o StrictHostKeyChecking=no "$TMP_ARCHIVE" "$REMOTE_USER@$EC2_IP:~/$ARCHIVE_NAME"
+echo -e "${GREEN}✅ 上传成功${NC}"
 echo ""
 
 # 步骤4: 在EC2上部署
 echo -e "${YELLOW}🔄 步骤 4/4: 更新服务器...${NC}"
-ssh -i "$KEY_PATH" -o StrictHostKeyChecking=no ubuntu@$EC2_IP << 'ENDSSH'
+ssh -i "$KEY_PATH" -o StrictHostKeyChecking=no "$REMOTE_USER@$EC2_IP" \
+    "ARCHIVE_NAME='$ARCHIVE_NAME' REMOTE_WEB_ROOT='$REMOTE_WEB_ROOT' bash -s" << 'ENDSSH'
     set -e
 
     echo "解压文件..."
-    tar -xzf dist.tar.gz
+    tar -xzf "$ARCHIVE_NAME"
 
     echo "备份旧版本..."
-    sudo rm -rf /var/www/html.backup
-    sudo cp -r /var/www/html /var/www/html.backup || true
+    sudo rm -rf "${REMOTE_WEB_ROOT}.backup"
+    sudo cp -r "$REMOTE_WEB_ROOT" "${REMOTE_WEB_ROOT}.backup" || true
 
     echo "部署新版本..."
-    sudo rm -rf /var/www/html/*
-    sudo mv dist/* /var/www/html/
+    sudo rm -rf "$REMOTE_WEB_ROOT"/*
+    sudo mv dist/* "$REMOTE_WEB_ROOT"/
 
     echo "重启Nginx..."
     sudo systemctl restart nginx
 
     echo "清理临时文件..."
-    rm -rf dist dist.tar.gz
+    rm -rf dist "$ARCHIVE_NAME"
 
     echo "✅ 服务器更新完成！"
 ENDSSH
 
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}✅ 部署成功${NC}"
-else
-    echo -e "${RED}❌ 部署失败${NC}"
-    exit 1
-fi
-
-# 清理本地临时文件
-rm -f dist.tar.gz
+echo -e "${GREEN}✅ 部署成功${NC}"
 
 echo ""
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"

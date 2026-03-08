@@ -21,16 +21,21 @@
 
 ## 🚀 快速开始
 
+### 运行环境
+
+- Node.js 20.19.0 或更高版本
+- pnpm 10.11.1
+
 ### 安装依赖
 
 ```bash
-npm install
+pnpm install
 ```
 
 ### 启动开发服务器
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 应用将在 http://localhost:3000 启动
@@ -38,13 +43,13 @@ npm run dev
 ### 构建生产版本
 
 ```bash
-npm run build
+pnpm build
 ```
 
 ### 预览生产构建
 
 ```bash
-npm run preview
+pnpm preview
 ```
 
 ## 📁 项目结构
@@ -200,18 +205,23 @@ import { images } from '@/assets/images'
 
 ### 部署到 AWS EC2
 
-详细部署指南请查看：[AWS 部署完整指南](./docs/AWS_DEPLOYMENT_GUIDE.md)
+仓库当前只保留一个通用部署脚本：
+
+- `deploy.sh`：在本地构建并把 `dist/` 上传到 EC2 上的 Nginx 静态目录
+
+更完整的手动部署说明见 [AWS 部署完整指南](./docs/AWS_DEPLOYMENT_GUIDE.md)。
 
 #### 快速部署步骤
 
 **1. 在 EC2 上配置环境**
 ```bash
-# SSH 连接到 EC2
+# SSH 连接到 EC2，并手动安装 Nginx
 ssh -i ~/path/to/key.pem ubuntu@your-ec2-ip
 
-# 运行服务器配置脚本
-wget https://raw.githubusercontent.com/your-repo/server-setup.sh
-bash server-setup.sh
+sudo apt update && sudo apt install -y nginx
+sudo mkdir -p /var/www/html
+sudo chown -R $USER:$USER /var/www/html
+sudo systemctl enable --now nginx
 ```
 
 **2. 从本地部署**

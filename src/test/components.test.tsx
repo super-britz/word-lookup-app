@@ -6,7 +6,16 @@ import { TagButton } from '../components/TagButton'
 import { BottomNav } from '../components/BottomNav'
 
 function renderWithRouter(ui: React.ReactElement) {
-  return render(<BrowserRouter>{ui}</BrowserRouter>)
+  return render(
+    <BrowserRouter
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true,
+      }}
+    >
+      {ui}
+    </BrowserRouter>
+  )
 }
 
 describe('StatsCard 组件', () => {

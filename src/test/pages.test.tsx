@@ -6,7 +6,15 @@ import { useAppStore } from '../store/useAppStore'
 
 function renderWithRouter(ui: React.ReactElement, initialEntries = ['/vocabulary']) {
   return render(
-    <MemoryRouter initialEntries={initialEntries}>{ui}</MemoryRouter>
+    <MemoryRouter
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true,
+      }}
+      initialEntries={initialEntries}
+    >
+      {ui}
+    </MemoryRouter>
   )
 }
 

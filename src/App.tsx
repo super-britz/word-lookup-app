@@ -11,7 +11,12 @@ import { Toast } from './components/Toast'
 
 function App() {
   return (
-    <Router>
+    <Router
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true,
+      }}
+    >
       <Toast />
       <Routes>
         <Route path="/" element={<HomePage />} />
